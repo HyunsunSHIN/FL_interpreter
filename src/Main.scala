@@ -81,22 +81,13 @@ object Main {
       case EApp(ef:Expr, eargs: List[Expr]) => {
         ef match {
         case EFun(params: List[String], eb: Expr) => {
-            def env_maker_with_params(param_input: List[String], args_input: List[Expr])
-            : Environment = param_input match {
-              case Nil => Nil
-              case hd_params::tail_params => args_input match {
-                case hd_args::tail_args => {
-                  val params_arg_element =
-                    ( hd_params,Valuebox(true_eval(hd_args,env_stack_in_true_eval,Nil)) )
-                  params_arg_element::env_maker_with_params(tail_params,tail_args)
-                }  // Basically, it calls by values. <= This should be checked.
-                case Nil => println("EApp Error!"); Nil
-                  // If this is called then, the size of parameters
-                  // and the that of args are not matching.
+           def evaluate_args(args : List[Expr]) : List[Val] = { // call by value 라고 하자 일단
+              args match {
+                case Nil => Nil
+                case hd::tail => true_eval(hd,env_stack_in_true_eval,Nil)::evaluate_args(tail)
               }
             }
-            val env_in_func = env_maker_with_params(params,eargs)
-            true_eval(ef,env_in_func::env_stack_in_true_eval,Nil)
+            true_eval(ef,env_stack_in_true_eval,evaluate_args(eargs))
           }
 
           case EName(name) => {
@@ -132,14 +123,12 @@ object Main {
       }
 
       case EFun(params,eb) => {
-        //TODO: COME HERE and fix the envstack to be delivered to the true_eval
         val params_env : Environment = env_maker_with_params_vals(params,arguments_in_true_eval)
         true_eval(eb,params_env::env_stack_in_true_eval, Nil)
       }
 
       case ELet(bs:List[Bind], eb:Expr) => {
         println("Elet in!")
-
         def EnvMaker(bs: List[Bind], former_scope:Environment_Stack, working_environment :Environment)
         : Environment = {
 
