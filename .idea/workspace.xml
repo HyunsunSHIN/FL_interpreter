@@ -2,11 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="aeb50c8d-d431-4832-bb8e-89c289f463c1" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/out/production/project/pp201701/proj/Main$.class" afterPath="$PROJECT_DIR$/out/production/project/pp201701/proj/Main$.class" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/out/production/project/pp201701/proj/Main.class" afterPath="$PROJECT_DIR$/out/production/project/pp201701/proj/Main.class" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/out/production/project/pp201701/projtest/Test$.class" afterPath="$PROJECT_DIR$/out/production/project/pp201701/projtest/Test$.class" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/proj.pdf" afterPath="$PROJECT_DIR$/proj.pdf" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Main.scala" afterPath="$PROJECT_DIR$/src/Main.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Test.scala" afterPath="$PROJECT_DIR$/src/Test.scala" />
     </list>
@@ -34,8 +29,8 @@
       <file leaf-file-name="Test.scala" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/Test.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="84">
-              <caret line="9" column="26" selection-start-line="9" selection-start-column="25" selection-end-line="9" selection-end-column="26" />
+            <state relative-caret-position="253">
+              <caret line="109" column="29" selection-start-line="109" selection-start-column="29" selection-end-line="109" selection-end-column="29" />
               <folding />
             </state>
           </provider>
@@ -44,7 +39,7 @@
       <file leaf-file-name="Data.scala" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/lib/lib-src/Data.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
+            <state relative-caret-position="-672">
               <caret line="18" column="17" selection-start-line="18" selection-start-column="13" selection-end-line="18" selection-end-column="17" />
               <folding />
             </state>
@@ -54,8 +49,8 @@
       <file leaf-file-name="Main.scala" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/Main.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="315">
-              <caret line="101" column="19" selection-start-line="101" selection-start-column="19" selection-end-line="101" selection-end-column="19" />
+            <state relative-caret-position="210">
+              <caret line="84" column="15" selection-start-line="84" selection-start-column="6" selection-end-line="84" selection-end-column="15" />
               <folding>
                 <element signature="e#22#53#0" expanded="true" />
               </folding>
@@ -642,12 +637,12 @@
       <workItem from="1498108419120" duration="7000" />
       <workItem from="1498109094470" duration="11301000" />
       <workItem from="1498198247471" duration="18901000" />
-      <workItem from="1498319394518" duration="399000" />
+      <workItem from="1498319394518" duration="1690000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="92182000" />
+    <option name="totallyTimeSpent" value="93473000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="22" width="1276" height="778" extended-state="6" />
@@ -662,7 +657,7 @@
       <window_info id="Documentation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" x="100" y="122" width="1076" height="578" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32944608" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.38411668" sideWeight="0.7536467" order="9" side_tool="true" content_ui="tabs" x="0" y="444" width="1276" height="333" />
+      <window_info id="Run" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.33711508" sideWeight="0.7536467" order="9" side_tool="true" content_ui="tabs" x="0" y="444" width="1276" height="333" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -952,7 +947,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/lib/lib-src/Data.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
+        <state relative-caret-position="-672">
           <caret line="18" column="17" selection-start-line="18" selection-start-column="13" selection-end-line="18" selection-end-column="17" />
           <folding />
         </state>
@@ -960,16 +955,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/Test.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="84">
-          <caret line="9" column="26" selection-start-line="9" selection-start-column="25" selection-end-line="9" selection-end-column="26" />
+        <state relative-caret-position="253">
+          <caret line="109" column="29" selection-start-line="109" selection-start-column="29" selection-end-line="109" selection-end-column="29" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/Main.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
-          <caret line="101" column="19" selection-start-line="101" selection-start-column="19" selection-end-line="101" selection-end-column="19" />
+        <state relative-caret-position="210">
+          <caret line="84" column="15" selection-start-line="84" selection-start-column="6" selection-end-line="84" selection-end-column="15" />
           <folding>
             <element signature="e#22#53#0" expanded="true" />
           </folding>

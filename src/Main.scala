@@ -91,6 +91,8 @@ object Main {
               case EFun(params,eb) => Exprbox(hd)::evaluate_args(tail)
               case _ =>  Valuebox(true_eval(hd,env_stack_in_true_eval,Nil))::evaluate_args(tail)
                }
+              // argument 중 function 인 것은 EFun인 채로 exprbox에 넣고
+              // 그 외는 모두 값을 계산해서 전달한다.
             }
           }
         }
