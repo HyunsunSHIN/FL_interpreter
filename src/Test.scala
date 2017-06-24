@@ -103,11 +103,14 @@ object Test extends App {
       }
 
 
-*/
 
+*/
      // "((fun (f) (fun (x) (f x))) (fun (x) (+ x 1)))"
       { // 9
-      val code = "( fun (x) (+ x 1) )"
+      val code = "((fun (f) ((fun (x) (f x)) 3)  ) (fun (x) (+ x 1)))"
+
+        val ress = conv.toInt(run_myeval(code))
+        print("myresult ",ress)
         val res = conv.isFun(run_myeval(code)) match {
           case true => true
           case _ => false
