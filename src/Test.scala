@@ -71,42 +71,46 @@ object Test extends App {
 
 
 
-      { // 5
-      val code = "(let ((val f (fun () (+ 1 2)))) (f))"
-        val res = conv.toInt(run_myeval(code)) match {
-          case Some(3) => true
-          case _ => false
-        }
-        print_result(res)
-      }
+//      { // 5 -confiremd
+//      val code = "(let ((val f (fun () (+ 1 2)))) (f))"
+//        val res = conv.toInt(run_myeval(code)) match {
+//          case Some(3) => true
+//          case _ => false
+//        }
+//        print_result(res)
+//      }
 
-        /*
-       { // 6 -confiremd
-       val code = "(let ((val a 10) (val b (+ a 1))) (* b 3))"
-         val res = conv.toInt(run_myeval(code)) match {
-           case Some(33) => true
-           case _ => false
-         }
-         print_result(res)
+
+//       { // 6 -confiremd
+//       val code = "(let ((val a 10) (val b (+ a 1))) (* b 3))"
+//         val res = conv.toInt(run_myeval(code)) match {
+//           case Some(33) => true
+//           case _ => false
+//         }
+//         print_result(res)
+//       }
+       { // 7 -confirmed
+       //  (let ((def f (fun (x) (if (= x 0) 0 (+ x (f (+ x 1))))))) (f 5))
+         //"(let ((def f (fun (x) (if (= x 0) 0 (+ x (f (+ x 1))))))) (f 5))"
+//       val code = "(let ((def f (fun (x) (if (= x 20) " +
+//           "0 (+ x (f (+ x 1))))))) (f 5))"
+//         val res = conv.toInt(run_myeval(code)) match {
+//           case Some(n) => println(n); true
+//           case _ => println("fails"); false
+//         }
+//         print_result(res)
        }
 
-       { // 7
-       val code = "(let ((def f (fun (x) (if (= x 0) 0 (+ x (f (- x 1))))))) (f 5))"
-         val res = conv.toInt(run_myeval(code)) match {
-           case Some(15) => true
-           case _ => false
-         }
-         print_result(res)
-       }
+//       { // 8
+//       val code = "(let ((def f (fun (n) (g n 1))) (def g (fun (a b) (> a b)))) (f 3))"
+//         val res = conv.toBool(run_myeval(code)) match {
+//           case Some(true) => true
+//           case _ => false
+//         }
+//         print_result(res)
+//       }
 
-       { // 8
-       val code = "(let ((def f (fun (n) (g n 1))) (def g (fun (a b) (> a b)))) (f 3))"
-         val res = conv.toBool(run_myeval(code)) match {
-           case Some(true) => true
-           case _ => false
-         }
-         print_result(res)
-       }
+
 
        { // 9
        val code = "((fun (f) (fun (x) (f x))) (fun (x) (+ x 1)))"
@@ -116,7 +120,7 @@ object Test extends App {
          }
          print_result(res)
        }
-       */
+
     } catch {
       case e : LexerException =>
         println("Lexer failed: " + e.msg)

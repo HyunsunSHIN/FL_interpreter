@@ -46,53 +46,72 @@ object Main {
   class EvalException(val msg: String) extends Exception
 
 
-  def env_maker_with_params(param_input: List[String], args_input: List[Expr], environment_stack: Environment_Stack)
+  def env_maker_with_params_vals(param_input: List[String], args_input: List[Val])
   : Environment = param_input match {
     case Nil => Nil
     case hd_params::tail_params => args_input match {
       case hd_args::tail_args => {
-        val params_arg_element = (hd_params,Valuebox(true_eval(hd_args,environment_stack)))
-        params_arg_element::env_maker_with_params(tail_params,tail_args, environment_stack)
+        val params_arg_element = ( hd_params,Valuebox(hd_args) )
+        params_arg_element::env_maker_with_params_vals(tail_params,tail_args)
       }  // 기본적으로 call by value로 호출
-      case Nil => println("EApp Error!"); Nil
+      case Nil => println("EApp Error! :IN PARAMS VALS"); Nil
     }
   }
 
   def myeval(e:Expr) : Val = {
-      true_eval(e,Nil)
+      true_eval(e,Nil,Nil)
   }
 
-  def true_eval(e:Expr, environment_stack: Environment_Stack) : Val = {
+  def true_eval(e:Expr, env_stack_in_true_eval: Environment_Stack, arguments_in_true_eval: List[Val]) : Val = {
     println("true_eval in! the expr is",e.toString)
     e match {
 
       case EApp(ef:Expr, eargs: List[Expr]) => {
 
+
         ef match {
+
           case EFun(params: List[String], eb: Expr) => {
-            val env_in_func = env_maker_with_params(params,eargs,environment_stack)
-            true_eval(ef,env_in_func::environment_stack)
+
+            def env_maker_with_params(param_input: List[String], args_input: List[Expr])
+            : Environment = param_input match {
+              case Nil => Nil
+              case hd_params::tail_params => args_input match {
+                case hd_args::tail_args => {
+                  //!!
+                  val params_arg_element = ( hd_params,Valuebox(true_eval(hd_args,env_stack_in_true_eval,Nil)) )
+                  params_arg_element::env_maker_with_params(tail_params,tail_args)
+                }  // 기본적으로 call by value로 호출
+                case Nil => println("EApp Error!"); Nil
+              }
+            }
+
+            val env_in_func = env_maker_with_params(params,eargs)
+            true_eval(ef,env_in_func::env_stack_in_true_eval,Nil)
           }
 
           case EName(name) => {
 
-              def evaluate_args(args : List[Expr]) : List[Val] = { // call by value 라고 하자 일단
+            def evaluate_args(args : List[Expr]) : List[Val] = { // call by value 라고 하자 일단
                     args match {
                       case Nil => Nil
-                      case hd::tail => true_eval(hd,environment_stack)::evaluate_args(tail)
+                      case hd::tail => true_eval(hd,env_stack_in_true_eval,Nil)::evaluate_args(tail)
                     }
               }
-              // true_eval(EName())
-
+              val evaluated_args = evaluate_args(eargs)
+              true_eval(EName(name),env_stack_in_true_eval, evaluated_args)
           }
-
           case _ => println("EApp Error"); VNil()
         }
         // 새롭게 arg_environment를 만든다고 생각하면 된다. 그리고 기본적인 env Stack 과 독립적으로 줄 것 임
 
       }
 
-      case EFun(params,eb) => { true_eval(eb,environment_stack) }
+      case EFun(params,eb) => {
+        //TODO: COME HERE and fix the envstack to be delivered to the true_eval
+        val params_env : Environment = env_maker_with_params_vals(params,arguments_in_true_eval)
+        true_eval(eb,params_env::env_stack_in_true_eval, Nil)
+      }
 
       case ELet(bs:List[Bind], eb:Expr) => {
         println("Elet in!")
@@ -109,7 +128,7 @@ object Main {
                 EnvMaker(tail,former_scope,new_working_env)
               }
               case BVAL() => {
-                val value_evaluated = true_eval(expr,working_environment::former_scope)
+                val value_evaluated = true_eval(expr,working_environment::former_scope,Nil)
                 val new_env_element : (String,EVbox) = (str,Valuebox(value_evaluated))
                 val new_env = new_env_element::working_environment
                 EnvMaker(tail,former_scope,new_env)
@@ -118,16 +137,16 @@ object Main {
           }
         }
 
-        val newly_added_scope = EnvMaker(bs,environment_stack,Nil)
+        val newly_added_scope = EnvMaker(bs,env_stack_in_true_eval,Nil)
         newly_added_scope match {
-          case Nil => true_eval(eb,environment_stack)
-          case _ => true_eval(eb, newly_added_scope::environment_stack)
+          case Nil => true_eval(eb,env_stack_in_true_eval,Nil)
+          case _ => true_eval(eb, newly_added_scope::env_stack_in_true_eval,Nil)
         }
       }
 
       case EName(x: String) => {
 
-        println("EName("+x+"), env_stack: " + environment_stack)
+        println("EName("+x+"), env_stack: " + env_stack_in_true_eval)
 
         def ev_finder(env_in_ev_finder: Environment, x:String) : Option[EVbox] = {
           println("env_in_ev_finder: ",env_in_ev_finder)
@@ -149,20 +168,25 @@ object Main {
                result match {
                  case None => stack_undwinder(env_stk_tail,x)
                  case Some(res) =>  res match {
-
-                   case Exprbox(expr) => true_eval(expr,env_in_stk_unwinder)
+                   case Exprbox(expr) => {
+                     true_eval(expr,env_in_stk_unwinder,arguments_in_true_eval)
+                     // The reason why argument_list, just List[val] is transmitted to the Efun,
+                     // not the Environment(List[(String,Val)]),
+                     // is because we don't know the params at this point.
+                     // So, We deliver just argument_list which is received to the EName()
+                     // (This was transferred at EApp() with true_eval(EName(),env,arguments)
+                   }
                    case Valuebox(value) => value
                  }
                }
              }
            }
         }
-
-        stack_undwinder(environment_stack,x)
+        stack_undwinder(env_stack_in_true_eval,x)
       }
 
       case EHd(el:Expr) => el match {
-        case ECons(eh,et) => true_eval(eh,environment_stack)
+        case ECons(eh,et) => true_eval(eh,env_stack_in_true_eval,Nil)
         case _ => println("EHd fial"); VNil()
       }
 
@@ -176,11 +200,11 @@ object Main {
       //same version ELq, EGq must be made.
 
       case EEq(e1,e2) => {
-        true_eval(e1,environment_stack) match {
-          case ValExpr(expr1) => true_eval(EEq(expr1,e2),environment_stack)
+        true_eval(e1,env_stack_in_true_eval,Nil) match {
+          case ValExpr(expr1) => true_eval(EEq(expr1,e2),env_stack_in_true_eval,Nil)
           case VInt(n1) => {
-            true_eval(e2,environment_stack) match {
-              case ValExpr(expr2) => true_eval(EEq(e1,expr2),environment_stack)
+            true_eval(e2,env_stack_in_true_eval,Nil) match {
+              case ValExpr(expr2) => true_eval(EEq(e1,expr2),env_stack_in_true_eval,Nil)
               case VInt(n2) => { if(n1 == n2) VBool(true) else VBool(false) }
               case _ => println("VInt failed"); VNil()
             }
@@ -190,11 +214,11 @@ object Main {
       }
 
       case EIf(econd:Expr, et:Expr, ef:Expr) => {
-        true_eval(econd,environment_stack) match {
-          case ValExpr(expr) => true_eval( EIf(expr,et,ef), environment_stack)
+        true_eval(econd,env_stack_in_true_eval,Nil) match {
+          case ValExpr(expr) => true_eval( EIf(expr,et,ef), env_stack_in_true_eval,Nil)
           case VBool(boolean: Boolean) => boolean match {
-            case true => true_eval(et,environment_stack)
-            case false => true_eval(ef,environment_stack)
+            case true => true_eval(et,env_stack_in_true_eval,Nil)
+            case false => true_eval(ef,env_stack_in_true_eval,Nil)
           }
           case _ => println("EIf failed"); VNil()
         }
@@ -202,11 +226,11 @@ object Main {
 
       //same version EMult, EMinus must be made.
       case EPlus(e1, e2)  => {
-        true_eval(e1,environment_stack) match {
+        true_eval(e1,env_stack_in_true_eval,Nil) match {
 
-          case ValExpr(expr) => true_eval( EPlus(expr,e2),environment_stack)
-          case VInt(n1) => true_eval(e2,environment_stack) match {
-            case ValExpr(expr2) => true_eval( EPlus(e1,expr2),environment_stack )
+          case ValExpr(expr) => true_eval( EPlus(expr,e2),env_stack_in_true_eval,Nil)
+          case VInt(n1) => true_eval(e2,env_stack_in_true_eval,Nil) match {
+            case ValExpr(expr2) => true_eval( EPlus(e1,expr2),env_stack_in_true_eval,Nil)
             case VInt(n2) => VInt(n1+n2)
             case _ => println("EPlus failed"); VNil()
           }
