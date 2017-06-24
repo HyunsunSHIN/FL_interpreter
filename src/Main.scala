@@ -16,7 +16,7 @@ object Value {
     case class VNil() extends Val
     case class VInt(n: Int) extends Val
     case class VBool(boolean: Boolean) extends Val
-    case class VPair() extends Val
+    case class VPair(epxr1: Val, expr2: Val) extends Val
     case class VFunc() extends Val
 
   abstract class ConvertToScala[A] {
@@ -33,9 +33,21 @@ object Value {
        case VInt(n : Int) => Some(n)
        case _ => None
      }
-     override def isNil(a: Val): Boolean = true //a match { case}
-     override def toPair(a: Val): Option[(Val, Val)] = Some((VNil(),VNil()))//a match {}
-     override def toBool(a: Val): Option[Boolean] = None//a match {}
+
+     override def isNil(a: Val): Boolean =  a match {
+       case VNil() => true
+       case _ => false
+     }
+     override def toPair(a: Val): Option[(Val, Val)] = a match {
+       case VPair(val1,val2) => Some(val1, val2)
+       case _ => None
+     }
+
+     override def toBool(a: Val): Option[Boolean] = a match {
+       case VBool(bool) => Some(bool)
+       case _ => None
+     }
+
      override def isFun(a: Val): Boolean = true//a match {}
    }
 }
@@ -197,7 +209,11 @@ object Main {
         case _ => println("EConst fial"); VNil()
       }
 
-      case ECons(e1,e2) => println("ECons in"); VNil() // Econs is constructor. So if it is evaluated, then something's going wrong.
+      case ECons(e1,e2) => {
+        val val_1 = true_eval(e1,env_stack_in_true_eval,Nil)
+        val val_2 = true_eval(e2,env_stack_in_true_eval,Nil)
+        println("ECons in"); VPair(val_1,val_2)
+      } // Econs is constructor. So if it is evaluated, then something's going wrong.
       //same version ELq, EGq must be made.
 
       case EEq(e1,e2) => {
