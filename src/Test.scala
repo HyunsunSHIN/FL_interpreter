@@ -28,7 +28,7 @@ object Test extends App {
     try {
       println("=================")
       println("1. Basic Test")
-
+/*
       { // 1
       val code = "(hd (cons 1 2))"
         val res = conv.toInt(run_myeval(code)) match {
@@ -93,7 +93,7 @@ object Test extends App {
       }
 
       { // 8
-      val code = "(let ((def f (fun (n) (g n 1))) (def g (fun (a b) (> a b)))) (f 3))"
+      val code = "(let ((def f (fun (n) (g n 10))) (def g (fun (a b) (> a b)))) (f 13))"
         val res = conv.toBool(run_myeval(code)) match {
           case Some(true) => true
           case _ => false
@@ -102,6 +102,10 @@ object Test extends App {
         print_result(res)
       }
 
+
+*/
+
+     // (( fun (y) ( (fun(x) (x + y )) 2 ) ) 3 )
       { // 9
       val code = "((fun (f) (fun (x) (f x))) (fun (x) (+ x 1)))"
         val res = conv.isFun(run_myeval(code)) match {
@@ -120,8 +124,8 @@ object Test extends App {
     }
 
     try {
-      println("=================")
-      println("2. Tailrec Test (should be finished)")
+//      println("=================")
+//      println("2. Tailrec Test (should be finished)")
 //      val code = "(let ((def f (fun (x n) (if (= x 0) n (f (- x 1) (+ n x)))) )) (f 9999 0))"
 //      val res = conv.toInt(run_myeval(code)) match {
 //        case Some(49995000) => true

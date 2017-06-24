@@ -58,15 +58,19 @@ object Main {
   class EvalException(val msg: String) extends Exception
 
 
-  def env_maker_with_params_vals(param_input: List[String], args_input: List[Val])
+  def env_maker_with_params_vals(param_input: List[String], args_input: List[EVbox])
   : Environment = param_input match {
     case Nil => Nil
     case hd_params::tail_params => args_input match {
       case hd_args::tail_args => {
-        val params_arg_element = ( hd_params,Valuebox(hd_args) )
+        val params_arg_element = (hd_params, hd_args)
         params_arg_element::env_maker_with_params_vals(tail_params,tail_args)
-      }  // 기본적으로 call by value로 호출
-      case Nil => println("EApp Error! :IN PARAMS VALS"); Nil
+      }
+      // 기본적으로 call by value로 호출이었으나 hd_args가 function 인 경우에만 한해서
+      // Expr으로 전달된다.
+      case Nil => Nil //println("EApp Error! :IN PARAMS VALS");
+        // This line can be excecuted when construction of fucntion
+        // without giving any argument to it.
     }
   }
 
@@ -74,54 +78,53 @@ object Main {
       true_eval(e,Nil,Nil)
   }
 
-  def true_eval(e:Expr, env_stack_in_true_eval: Environment_Stack, arguments_in_true_eval: List[Val]) : Val = {
+  def true_eval(e:Expr, env_stack_in_true_eval: Environment_Stack, arguments_in_true_eval: List[EVbox]) : Val = {
     println("true_eval in! the expr is",e.toString)
     e match {
 
       case EApp(ef:Expr, eargs: List[Expr]) => {
-        ef match {
-        case EFun(params: List[String], eb: Expr) => {
-           def evaluate_args(args : List[Expr]) : List[Val] = { // call by value 라고 하자 일단
-              args match {
-                case Nil => Nil
-                case hd::tail => true_eval(hd,env_stack_in_true_eval,Nil)::evaluate_args(tail)
-              }
-            }
-            true_eval(ef,env_stack_in_true_eval,evaluate_args(eargs))
-          }
 
-          case EName(name) => {
-
-            def evaluate_args(args : List[Expr]) : List[Val] = { // call by value 라고 하자 일단
-                    args match {
-                      case Nil => Nil
-                      case hd::tail => true_eval(hd,env_stack_in_true_eval,Nil)::evaluate_args(tail)
-                    }
-              }
-              val evaluated_args = evaluate_args(eargs)
-              true_eval(EName(name),env_stack_in_true_eval, evaluated_args)
-          }
-           case _ => {
-             def excecute_list_of_expr(x : List[Expr], formerVal : Val) : Val = {
-               x match {
-                 case Nil => formerVal
-                 case hd::tail =>  excecute_list_of_expr(tail,true_eval(hd,env_stack_in_true_eval,Nil))
+        def evaluate_args(args : List[Expr]) : List[EVbox] = { // call by value 라고 하자 일단
+          args match {
+            case Nil => Nil
+            case hd::tail => { hd match {
+              case EFun(params,eb) => Exprbox(hd)::evaluate_args(tail)
+              case _ =>  Valuebox(true_eval(hd,env_stack_in_true_eval,Nil))::evaluate_args(tail)
                }
-             }
-             val intermediate_result = true_eval(ef,env_stack_in_true_eval,Nil)
-             excecute_list_of_expr(eargs,intermediate_result)
-             // 1) 괄호가 중첩된 경우를 manage. - args = Nil인 경우가 됨
-             // 2) 여러개의 Expression 이 sequential 하게 들어오는 경우
-             //    마지막 것만을 출력해줄 수 있도록 함
-             //    ex> ( (+ 1 3) (- 1 2) 3 )
-             //     => 3 출력
-             //    ex> ((3))
-             //     => 3 출력
-           }
+            }
+          }
+        }
+
+        ef match
+          {
+                case EFun(params: List[String], eb: Expr) => {
+                    true_eval(ef,env_stack_in_true_eval,evaluate_args(eargs))
+                  }
+
+                case EName(name) => {
+                    val evaluated_args = evaluate_args(eargs)
+                    true_eval(EName(name),env_stack_in_true_eval, evaluated_args)
+                }
+                 case _ => {
+                   def excecute_list_of_expr(x : List[Expr], formerVal : Val) : Val = {
+                     x match {
+                       case Nil => formerVal
+                       case hd::tail =>  excecute_list_of_expr(tail,true_eval(hd,env_stack_in_true_eval,Nil))
+                     }
+                   }
+                   val intermediate_result = true_eval(ef,env_stack_in_true_eval,Nil)
+                   excecute_list_of_expr(eargs,intermediate_result)
+                   // 1) 괄호가 중첩된 경우를 manage. - args = Nil인 경우가 됨
+                   // 2) 여러개의 Expression 이 sequential 하게 들어오는 경우
+                   //    마지막 것만을 출력해줄 수 있도록 함
+                   //    ex> ( (+ 1 3) (- 1 2) 3 )
+                   //     => 3 출력
+                   //    ex> ((3))
+                   //     => 3 출력
+                 }
         }
         // 새롭게 arg_environment를 만든다고 생각하면 된다. 그리고 기본적인 env Stack 과 독립적으로 줄 것 임
       }
-
       case EFun(params,eb) => {
         val params_env : Environment = env_maker_with_params_vals(params,arguments_in_true_eval)
         true_eval(eb,params_env::env_stack_in_true_eval, Nil)
