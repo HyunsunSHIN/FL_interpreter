@@ -7,18 +7,13 @@ import pp201701.proj.Lexer._
 import pp201701.proj.Parser._
 
 object Test extends App {
-  def print_result(b:Boolean) : Unit = {
-    print("\n =============================== Result > ")
-    if (b) println("AWESOME") else println("be careful!")
-    println("---------------------------------------------------")
-  }
+  def print_result(b:Boolean) : Unit =
+    if (b) println("O") else println("X")
 
   def run_eval(eval: Expr => Val)(code:String) : Val = {
     val tokens = ProjLexer(code)
     val e:Expr = Parser(tokens)
-    println("code: "+code)
     eval(e)
-
   }
 
   def run_myeval = run_eval(myeval) _
@@ -28,7 +23,7 @@ object Test extends App {
     try {
       println("=================")
       println("1. Basic Test")
-/*
+
       { // 1
       val code = "(hd (cons 1 2))"
         val res = conv.toInt(run_myeval(code)) match {
@@ -41,7 +36,7 @@ object Test extends App {
       { // 2
       val code = "(let ((val p (cons 1 (cons true nil)))) (cons 0 p))"
         val res = conv.toPair(run_myeval(code)) match {
-          case Some(_) =>  true  // this only checks whether the result is a pair.
+          case Some(_) => true // this only checks whether the result is a pair.
           case _ => false
         }
         print_result(res)
@@ -66,10 +61,10 @@ object Test extends App {
       }
 
       { // 5
-      val code = "(let ((val f ((fun (y) (+ y 2)) 1) )) (f))"
+      val code = "(let ((val f (fun () (+ 1 2)) )) (f))"
         val res = conv.toInt(run_myeval(code)) match {
           case Some(3) => true
-          case _ => false
+          case _ =>  ; false
         }
         print_result(res)
       }
@@ -81,7 +76,7 @@ object Test extends App {
           case _ => false
         }
         print_result(res)
-       }
+      }
 
       { // 7
       val code = "(let ((def f (fun (x) (if (= x 0) 0 (+ x (f (- x 1))))))) (f 5))"
@@ -93,24 +88,16 @@ object Test extends App {
       }
 
       { // 8
-      val code = "(let ((def f (fun (n) (g n 10))) (def g (fun (a b) (> a b)))) (f 13))"
+      val code = "(let ((def f (fun (n) (g n 1))) (def g (fun (a b) (> a b)))) (f 3))"
         val res = conv.toBool(run_myeval(code)) match {
           case Some(true) => true
           case _ => false
         }
-        println("I got you!========")
         print_result(res)
       }
 
-
-
-*/
-     // "((fun (f) (fun (x) (f x))) (fun (x) (+ x 1)))"
       { // 9
-      val code = "((fun (f) ((fun (x) (f x)) 3)  ) (fun (x) (+ x 1)))"
-
-        val ress = conv.toInt(run_myeval(code))
-        print("myresult ",ress)
+      val code = "((fun (f) (fun (x) (f x))) (fun (x) (+ x 1)))"
         val res = conv.isFun(run_myeval(code)) match {
           case true => true
           case _ => false

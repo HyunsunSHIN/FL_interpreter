@@ -138,12 +138,12 @@ object Main {
           true_eval(eb,params_env::env_stack_in_true_eval, Nil,false)
         }
        else{
-          print("In EFun, EApp")
+          //print("In EFun, EApp")
           VFunc(EFun(params,eb))
         }
       }
       case ELet(bs:List[Bind], eb:Expr) => {
-        println("Elet in!")
+       // println("Elet in!")
         def EnvMaker(bs: List[Bind], former_scope:Environment_Stack, working_environment :Environment)
         : Environment = {
 
@@ -174,10 +174,10 @@ object Main {
 
       case EName(x: String) => {
 
-        println("EName("+x+"), env_stack: " + env_stack_in_true_eval)
+        //println("EName("+x+"), env_stack: " + env_stack_in_true_eval)
 
         def ev_finder(env_in_ev_finder: Environment, x:String) : Option[EVbox] = {
-          println("env_in_ev_finder: ",env_in_ev_finder)
+          //println("env_in_ev_finder: ",env_in_ev_finder)
           env_in_ev_finder match {
             case Nil => None
             case hd::tail => {
@@ -188,9 +188,10 @@ object Main {
         }
 
         def stack_undwinder(env_in_stk_unwinder: Environment_Stack, x:String): Val ={
-         println("env_stack_unwider in! and name we are looking for is ", x)
+         //println("env_stack_unwider in! and name we are looking for is ", x)
           env_in_stk_unwinder match {
-             case Nil => println("EName error: env_stack fully consumed w/o getting name"); VNil();
+             case Nil => // println("EName error: env_stack fully consumed w/o getting name");
+               VNil();
              case env_stk_hd::env_stk_tail => {
                val result : Option[EVbox] = ev_finder(env_stk_hd,x)
                result match {
@@ -227,7 +228,8 @@ object Main {
 
       case EHd(el:Expr) => el match {
         case ECons(eh,et) => true_eval(eh,env_stack_in_true_eval,Nil,false)
-        case _ => println("EHd fial"); VNil()
+        case _ => //println("EHd fial");
+          VNil()
       }
 
       case EConst(c) => c match {
@@ -235,13 +237,15 @@ object Main {
         case CTrue() => VBool(true)
         case CFalse() => VBool(false)
         case CNil() => VNil();
-        case _ => println("EConst fail"); VNil()
+        case _ => // println("EConst fail");
+          VNil()
       }
 
       case ECons(e1,e2) => {
         val val_1 = true_eval(e1,env_stack_in_true_eval,Nil,false)
         val val_2 = true_eval(e2,env_stack_in_true_eval,Nil,false)
-        println("ECons in"); VPair(val_1,val_2)
+        //println("ECons in");
+        VPair(val_1,val_2)
       }
 
       case EEq(e1,e2) => {
@@ -251,10 +255,12 @@ object Main {
             true_eval(e2,env_stack_in_true_eval,Nil,false) match {
               case ValExpr(expr2) => true_eval(EEq(e1,expr2),env_stack_in_true_eval,Nil,false)
               case VInt(n2) => { if(n1 == n2) VBool(true) else VBool(false) }
-              case _ => println("VInt failed"); VNil()
+              case _ => // println("VInt failed");
+                VNil()
             }
           }
-          case _ => println("EEQ failed"); VNil()
+          case _ => // println("EEQ failed");
+            VNil()
         }
       }
 
@@ -268,7 +274,8 @@ object Main {
               case _ => println("VInt failed"); VNil()
             }
           }
-          case _ => println("ELT failed"); VNil()
+          case _ => // println("ELT failed");
+            VNil()
         }
       }
 
@@ -279,10 +286,12 @@ object Main {
             true_eval(e2,env_stack_in_true_eval,Nil,false) match {
               case ValExpr(expr2) => true_eval(EEq(e1,expr2),env_stack_in_true_eval,Nil,false)
               case VInt(n2) => { if(n1 > n2) VBool(true) else VBool(false) }
-              case _ => println("VInt failed"); VNil()
+              case _ => // println("VInt failed");
+                VNil()
             }
           }
-          case _ => println("ELT failed"); VNil()
+          case _ => // println("ELT failed");
+            VNil()
         }
       }
 
@@ -294,7 +303,8 @@ object Main {
             case true => true_eval(et,env_stack_in_true_eval,Nil,false)
             case false => true_eval(ef,env_stack_in_true_eval,Nil,false)
           }
-          case _ => println("EIf failed"); VNil()
+          case _ => // println("EIf failed");
+            VNil()
         }
       }
 
@@ -305,9 +315,11 @@ object Main {
           case VInt(n1) => true_eval(e2,env_stack_in_true_eval,Nil,false) match {
             case ValExpr(expr2) => true_eval( EPlus(e1,expr2),env_stack_in_true_eval,Nil,false)
             case VInt(n2) => VInt(n1+n2)
-            case _ => println("EPlus failed"); VNil()
+            case _ => //println("EPlus failed");
+              VNil()
           }
-          case _ => println("EPlus failed"); VNil()
+          case _ => //println("EPlus failed");
+            VNil()
         }
       }
 
@@ -318,9 +330,11 @@ object Main {
           case VInt(n1) => true_eval(e2,env_stack_in_true_eval,Nil,false) match {
             case ValExpr(expr2) => true_eval( EPlus(e1,expr2),env_stack_in_true_eval,Nil,false)
             case VInt(n2) => VInt(n1-n2)
-            case _ => println("EPlus failed"); VNil()
+            case _ => //println("EPlus failed");
+              VNil()
           }
-          case _ => println("EPlus failed"); VNil()
+          case _ => // println("EPlus failed");
+            VNil()
         }
       }
 
@@ -331,14 +345,17 @@ object Main {
           case VInt(n1) => true_eval(e2,env_stack_in_true_eval,Nil,false) match {
             case ValExpr(expr2) => true_eval( EPlus(e1,expr2),env_stack_in_true_eval,Nil,false)
             case VInt(n2) => VInt(n1*n2)
-            case _ => println("EPlus failed"); VNil()
+            case _ => //println("EPlus failed");
+              VNil()
           }
-          case _ => println("EPlus failed"); VNil()
+          case _ => // println("EPlus failed");
+            VNil()
         }
       }
 
 
-      case _ =>  println("Other failed"); VNil()
+      case _ =>  //println("Other failed");
+        VNil()
 
 
     }
