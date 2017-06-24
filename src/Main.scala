@@ -197,6 +197,7 @@ object Main {
         case _ => println("EConst fial"); VNil()
       }
 
+      case ECons(e1,e2) => println("ECons in"); VNil() // Econs is constructor. So if it is evaluated, then something's going wrong.
       //same version ELq, EGq must be made.
 
       case EEq(e1,e2) => {
@@ -213,6 +214,35 @@ object Main {
         }
       }
 
+      case ELt(e1,e2) => {
+        true_eval(e1,env_stack_in_true_eval,Nil) match {
+          case ValExpr(expr1) => true_eval(EEq(expr1,e2),env_stack_in_true_eval,Nil)
+          case VInt(n1) => {
+            true_eval(e2,env_stack_in_true_eval,Nil) match {
+              case ValExpr(expr2) => true_eval(EEq(e1,expr2),env_stack_in_true_eval,Nil)
+              case VInt(n2) => { if(n1 > n2) VBool(true) else VBool(false) }
+              case _ => println("VInt failed"); VNil()
+            }
+          }
+          case _ => println("ELT failed"); VNil()
+        }
+      }
+
+      case EGt(e1,e2) => {
+        true_eval(e1,env_stack_in_true_eval,Nil) match {
+          case ValExpr(expr1) => true_eval(EEq(expr1,e2),env_stack_in_true_eval,Nil)
+          case VInt(n1) => {
+            true_eval(e2,env_stack_in_true_eval,Nil) match {
+              case ValExpr(expr2) => true_eval(EEq(e1,expr2),env_stack_in_true_eval,Nil)
+              case VInt(n2) => { if(n1 > n2) VBool(true) else VBool(false) }
+              case _ => println("VInt failed"); VNil()
+            }
+          }
+          case _ => println("ELT failed"); VNil()
+        }
+      }
+
+
       case EIf(econd:Expr, et:Expr, ef:Expr) => {
         true_eval(econd,env_stack_in_true_eval,Nil) match {
           case ValExpr(expr) => true_eval( EIf(expr,et,ef), env_stack_in_true_eval,Nil)
@@ -224,7 +254,6 @@ object Main {
         }
       }
 
-      //same version EMult, EMinus must be made.
       case EPlus(e1, e2)  => {
         true_eval(e1,env_stack_in_true_eval,Nil) match {
 
@@ -237,7 +266,37 @@ object Main {
           case _ => println("EPlus failed"); VNil()
         }
       }
+
+      case EMinus(e1, e2)  => {
+        true_eval(e1,env_stack_in_true_eval,Nil) match {
+
+          case ValExpr(expr) => true_eval( EPlus(expr,e2),env_stack_in_true_eval,Nil)
+          case VInt(n1) => true_eval(e2,env_stack_in_true_eval,Nil) match {
+            case ValExpr(expr2) => true_eval( EPlus(e1,expr2),env_stack_in_true_eval,Nil)
+            case VInt(n2) => VInt(n1-n2)
+            case _ => println("EPlus failed"); VNil()
+          }
+          case _ => println("EPlus failed"); VNil()
+        }
+      }
+
+      case EMult(e1, e2)  => {
+        true_eval(e1,env_stack_in_true_eval,Nil) match {
+
+          case ValExpr(expr) => true_eval( EPlus(expr,e2),env_stack_in_true_eval,Nil)
+          case VInt(n1) => true_eval(e2,env_stack_in_true_eval,Nil) match {
+            case ValExpr(expr2) => true_eval( EPlus(e1,expr2),env_stack_in_true_eval,Nil)
+            case VInt(n2) => VInt(n1*n2)
+            case _ => println("EPlus failed"); VNil()
+          }
+          case _ => println("EPlus failed"); VNil()
+        }
+      }
+
+
       case _ =>  println("Other failed"); VNil()
+
+
     }
   }
 
