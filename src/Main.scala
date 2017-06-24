@@ -79,25 +79,22 @@ object Main {
     e match {
 
       case EApp(ef:Expr, eargs: List[Expr]) => {
-
-
         ef match {
-
-          case EFun(params: List[String], eb: Expr) => {
-
+        case EFun(params: List[String], eb: Expr) => {
             def env_maker_with_params(param_input: List[String], args_input: List[Expr])
             : Environment = param_input match {
               case Nil => Nil
               case hd_params::tail_params => args_input match {
                 case hd_args::tail_args => {
-                  //!!
-                  val params_arg_element = ( hd_params,Valuebox(true_eval(hd_args,env_stack_in_true_eval,Nil)) )
+                  val params_arg_element =
+                    ( hd_params,Valuebox(true_eval(hd_args,env_stack_in_true_eval,Nil)) )
                   params_arg_element::env_maker_with_params(tail_params,tail_args)
-                }  // 기본적으로 call by value로 호출
+                }  // Basically, it calls by values. <= This should be checked.
                 case Nil => println("EApp Error!"); Nil
+                  // If this is called then, the size of parameters
+                  // and the that of args are not matching.
               }
             }
-
             val env_in_func = env_maker_with_params(params,eargs)
             true_eval(ef,env_in_func::env_stack_in_true_eval,Nil)
           }
@@ -113,10 +110,25 @@ object Main {
               val evaluated_args = evaluate_args(eargs)
               true_eval(EName(name),env_stack_in_true_eval, evaluated_args)
           }
-          case _ => println("EApp Error"); VNil()
+           case _ => {
+             def excecute_list_of_expr(x : List[Expr], formerVal : Val) : Val = {
+               x match {
+                 case Nil => formerVal
+                 case hd::tail =>  excecute_list_of_expr(tail,true_eval(hd,env_stack_in_true_eval,Nil))
+               }
+             }
+             val intermediate_result = true_eval(ef,env_stack_in_true_eval,Nil)
+             excecute_list_of_expr(eargs,intermediate_result)
+             // 1) 괄호가 중첩된 경우를 manage. - args = Nil인 경우가 됨
+             // 2) 여러개의 Expression 이 sequential 하게 들어오는 경우
+             //    마지막 것만을 출력해줄 수 있도록 함
+             //    ex> ( (+ 1 3) (- 1 2) 3 )
+             //     => 3 출력
+             //    ex> ((3))
+             //     => 3 출력
+           }
         }
         // 새롭게 arg_environment를 만든다고 생각하면 된다. 그리고 기본적인 env Stack 과 독립적으로 줄 것 임
-
       }
 
       case EFun(params,eb) => {
@@ -206,15 +218,15 @@ object Main {
         case CInt(n) => VInt(n)
         case CTrue() => VBool(true)
         case CFalse() => VBool(false)
-        case _ => println("EConst fial"); VNil()
+        case CNil() => VNil();
+        case _ => println("EConst fail"); VNil()
       }
 
       case ECons(e1,e2) => {
         val val_1 = true_eval(e1,env_stack_in_true_eval,Nil)
         val val_2 = true_eval(e2,env_stack_in_true_eval,Nil)
         println("ECons in"); VPair(val_1,val_2)
-      } // Econs is constructor. So if it is evaluated, then something's going wrong.
-      //same version ELq, EGq must be made.
+      }
 
       case EEq(e1,e2) => {
         true_eval(e1,env_stack_in_true_eval,Nil) match {
