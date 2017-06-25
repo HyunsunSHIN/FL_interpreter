@@ -26,9 +26,9 @@ object Test extends App {
       println("1. Basic Test")
 
       { // 1
-      val code = "(hd (cons 1 2))"
+      val code = " (let (( val b 3 )) b)"
         val res = conv.toInt(run_myeval(code)) match {
-          case Some(1) => true
+          case Some(3) => true
           case _ => false
         }
         print_result(res)
@@ -136,11 +136,14 @@ object Test extends App {
     try {
       println("=================")
       println("3. Memoization Test (should take less than 5 sec)")
+
       val code = "(let ((def f (fun (n) (if (= n 0) 1 (if (= n 1) 0 (if (> (f (- n 1)) (f (- n 2))) 0 1)))))) (f 100))"
       val res = conv.toInt(run_myeval_memo(code)) match {
+
         case Some(1) => true
         case _ => false
       }
+
       print_result(res)
     } catch {
       case e : LexerException =>
