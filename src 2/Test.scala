@@ -61,10 +61,10 @@ object Test extends App {
       }
 
       { // 5
-      val code = "(let ((val f (fun () (+ 1 2)))) (f) )"
-        val res = conv.isFun(run_myeval(code)) match {
-          case true =>  true
-          case _ => print("Something wrong"); false
+      val code = "(let ((val f (fun () (+ 1 2)))) (f))"
+        val res = conv.toInt(run_myeval(code)) match {
+          case Some(3) => true
+          case _ => false
         }
         print_result(res)
       }
@@ -96,17 +96,14 @@ object Test extends App {
         print_result(res)
       }
 
-
       { // 9
-      val code = "( (let ((val f (fun (x) (+ x 2)))) f ) )"
+      val code = "((fun (f) (fun (x) (f x))) (fun (x) (+ x 1)))"
         val res = conv.isFun(run_myeval(code)) match {
           case true => true
           case _ => false
         }
         print_result(res)
       }
-
-
     } catch {
       case e : LexerException =>
         println("Lexer failed: " + e.msg)

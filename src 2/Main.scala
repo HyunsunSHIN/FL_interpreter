@@ -63,10 +63,7 @@ object Value {
       case _ => None
     }
 
-    override def isFun(a: Val): Boolean = a match {
-      case VFunc() => true
-      case _ => false
-    }
+    override def isFun(a: Val): Boolean = true //a match {}
   }
 }
 
@@ -183,8 +180,8 @@ object Main {
         }
 
         else {
-          // 그게 아니라면 전달 받은 argument와 parameter를 결합하여 새로운 Environemnt를 만들고
-          // 그 환경하에서 function body를 evaluate 한다.
+        // 그게 아니라면 전달 받은 argument와 parameter를 결합하여 새로운 Environemnt를 만들고
+        // 그 환경하에서 function body를 evaluate 한다.
           val params_env: Environment = env_maker_with_params_vals(params, arguments_in_true_eval)
           true_eval(eb, params_env :: env_stack_in_true_eval, Nil)
         }
