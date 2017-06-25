@@ -20,6 +20,8 @@ object Test extends App {
   def run_myeval_memo = run_eval(myeval_memo) _
 
   def run_test(implicit conv:ConvertToScala[Val]) = {
+
+
     try {
       println("=================")
       println("1. Basic Test")
@@ -114,14 +116,14 @@ object Test extends App {
     }
 
     try {
-//      println("=================")
-//      println("2. Tailrec Test (should be finished)")
-//      val code = "(let ((def f (fun (x n) (if (= x 0) n (f (- x 1) (+ n x)))) )) (f 9999 0))"
-//      val res = conv.toInt(run_myeval(code)) match {
-//        case Some(49995000) => true
-//        case _ => false
-//      }
-//      print_result(res)
+      println("=================")
+      println("2. Tailrec Test (should be finished)")
+      val code = "(let ((def f (fun (x n) (if (= x 0) n (f (- x 1) (+ n x)))) )) (f 9999 0))"
+      val res = conv.toInt(run_myeval(code)) match {
+        case Some(n) => print("is it nothing?", n); true
+        case _ => false
+      }
+      print_result(res)
     } catch {
       case e : LexerException =>
         println("Lexer failed: " + e.msg)

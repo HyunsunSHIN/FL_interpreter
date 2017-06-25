@@ -77,55 +77,62 @@ object Main {
   def myeval(e:Expr) : Val = {
       true_eval(e,Nil,Nil)
   }
-  
+
+  def evaluate_args(args : List[Expr], env_ev_args : Environment_Stack) : List[EVbox] = { // call by value 라고 하자 일단
+    args match {
+      case Nil => Nil
+      case hd::tail => { hd match {
+        case EFun(params,eb) => Exprbox(hd)::evaluate_args(tail, env_ev_args)
+        case _ =>  Valuebox(true_eval(hd,env_ev_args,Nil))::evaluate_args(tail,env_ev_args)
+      }
+        // argument 중 function 인 것은 EFun인 채로 exprbox에 넣고
+        // 그 외는 모두 값을 계산해서 전달한다.
+      }
+    }
+  }
+
+  @tailrec
+  def ev_finder(env_in_ev_finder: Environment, x:String) : Option[EVbox] = {
+    println("env_in_ev_finder: ",env_in_ev_finder)
+    env_in_ev_finder match {
+      case Nil => None
+      case hd::tail => {
+        if ( hd._1 == x ) { /*print("got you!");*/ Some(hd._2) }
+        else ev_finder(tail,x)
+      }
+    }
+  }
+
+
+  //tailrec
   def true_eval(e:Expr, env_stack_in_true_eval: Environment_Stack, arguments_in_true_eval: List[EVbox]) : Val = {
-    println("true_eval in! the expr is",e.toString)
+    //println("true_eval in! the expr is",e.toString)
     e match {
 
       case EApp(ef:Expr, eargs: List[Expr]) => {
 
-        def evaluate_args(args : List[Expr]) : List[EVbox] = { // call by value 라고 하자 일단
-          args match {
-            case Nil => Nil
-            case hd::tail => { hd match {
-              case EFun(params,eb) => Exprbox(hd)::evaluate_args(tail)
-              case _ =>  Valuebox(true_eval(hd,env_stack_in_true_eval,Nil))::evaluate_args(tail)
-               }
-              // argument 중 function 인 것은 EFun인 채로 exprbox에 넣고
-              // 그 외는 모두 값을 계산해서 전달한다.
-            }
-          }
-        }
-
         ef match
           {
                 case EFun(params: List[String], eb: Expr) => {
-                    true_eval(ef,env_stack_in_true_eval,evaluate_args(eargs))
+                    true_eval(ef,env_stack_in_true_eval,evaluate_args(eargs,env_stack_in_true_eval))
                   }
 
                 case EName(name) => {
-                    val evaluated_args = evaluate_args(eargs)
+                    val evaluated_args = evaluate_args(eargs,env_stack_in_true_eval)
                     true_eval(EName(name),env_stack_in_true_eval, evaluated_args)
                 }
                  case _ => {
-                   def excecute_list_of_expr(x : List[Expr], formerVal : Val) : Val = {
+
+                   def last_expr_finder(x : List[Expr], formerExpr : Expr) : Expr = {
                      x match {
-                       case Nil => formerVal
-                       case hd::tail =>  excecute_list_of_expr(tail,true_eval(hd,env_stack_in_true_eval,Nil))
+                       case Nil => formerExpr
+                       case hd::tail => last_expr_finder(tail,hd)
                      }
                    }
-                   val intermediate_result = true_eval(ef,env_stack_in_true_eval,Nil)
-                   excecute_list_of_expr(eargs,intermediate_result)
-                   // 1) 괄호가 중첩된 경우를 manage. - args = Nil인 경우가 됨
-                   // 2) 여러개의 Expression 이 sequential 하게 들어오는 경우
-                   //    마지막 것만을 출력해줄 수 있도록 함
-                   //    ex> ( (+ 1 3) (- 1 2) 3 )
-                   //     => 3 출력
-                   //    ex> ((3))
-                   //     => 3 출력
+                   val last_expr = last_expr_finder(eargs, ef)
+                   true_eval(last_expr,env_stack_in_true_eval,Nil)
                  }
         }
-        // 새롭게 arg_environment를 만든다고 생각하면 된다. 그리고 기본적인 env Stack 과 독립적으로 줄 것 임
       }
       case EFun(params,eb) => {
         if(params.nonEmpty && (arguments_in_true_eval == Nil)) {VFunc()}
@@ -133,6 +140,42 @@ object Main {
           val params_env: Environment = env_maker_with_params_vals(params, arguments_in_true_eval)
           true_eval(eb, params_env :: env_stack_in_true_eval, Nil)
         }
+      }
+      case EName(x: String) => {
+       // println("EName("+x+"), env_stack: " + env_stack_in_true_eval)
+
+       @tailrec
+       def stack_undwinder(env_in_stk_unwinder: Environment_Stack, x:String): (EVbox,Environment_Stack) ={
+         println("env_stack_unwider in! and name we are looking for is ", x)
+         env_in_stk_unwinder match {
+           case Nil => println("EName error: env_stack fully consumed w/o getting name"); (Valuebox(VNil()),Nil)
+           case env_stk_hd::env_stk_tail => {
+             val result : Option[EVbox] = ev_finder(env_stk_hd,x)
+             result match {
+               case None => stack_undwinder(env_stk_tail,x)
+               case Some(res) => (res,env_in_stk_unwinder)
+             }
+           }
+         }
+       }
+        val stk_unwind_result = stack_undwinder(env_stack_in_true_eval,x)
+        stk_unwind_result._1 match {
+          case Valuebox(value) => value
+          case Exprbox(expr) => true_eval(expr,stk_unwind_result._2,arguments_in_true_eval)
+        }
+      }
+
+      case EHd(el:Expr) => el match {
+        case ECons(eh,et) => true_eval(eh,env_stack_in_true_eval,Nil)
+        case _ => println("EHd fial"); VNil()
+      }
+
+      case EConst(c) => c match {
+        case CInt(n) => VInt(n)
+        case CTrue() => VBool(true)
+        case CFalse() => VBool(false)
+        case CNil() => VNil();
+        case _ => println("EConst fail"); VNil()
       }
 
       case ELet(bs:List[Bind], eb:Expr) => {
@@ -165,177 +208,113 @@ object Main {
         }
       }
 
-      case EName(x: String) => {
+      case ECons(e1, e2) => {
+        val val_1 = true_eval(e1, env_stack_in_true_eval, Nil)
+        val val_2 = true_eval(e2, env_stack_in_true_eval, Nil)
+        println("ECons in");
+        VPair(val_1, val_2)
+      }
 
-        println("EName("+x+"), env_stack: " + env_stack_in_true_eval)
-
-        @tailrec
-        def ev_finder(env_in_ev_finder: Environment, x:String) : Option[EVbox] = {
-          println("env_in_ev_finder: ",env_in_ev_finder)
-          env_in_ev_finder match {
-            case Nil => None
-            case hd::tail => {
-              if ( hd._1 == x ) { /*print("got you!");*/ Some(hd._2) }
-              else ev_finder(tail,x)
+      case EEq(e1, e2) => {
+        true_eval(e1, env_stack_in_true_eval, Nil) match {
+          case ValExpr(expr1) => true_eval(EEq(expr1, e2), env_stack_in_true_eval, Nil)
+          case VInt(n1) => {
+            true_eval(e2, env_stack_in_true_eval, Nil) match {
+              case ValExpr(expr2) => true_eval(EEq(e1, expr2), env_stack_in_true_eval, Nil)
+              case VInt(n2) => {
+                if (n1 == n2) VBool(true) else VBool(false)
+              }
+              case _ => println("VInt failed"); VNil()
             }
           }
+          case _ => println("EEQ failed"); VNil()
         }
-
-        @tailrec
-        def stack_undwinder(env_in_stk_unwinder: Environment_Stack, x:String): Val ={
-         println("env_stack_unwider in! and name we are looking for is ", x)
-          env_in_stk_unwinder match {
-             case Nil => println("EName error: env_stack fully consumed w/o getting name"); VNil();
-             case env_stk_hd::env_stk_tail => {
-               val result : Option[EVbox] = ev_finder(env_stk_hd,x)
-               result match {
-                 case None => stack_undwinder(env_stk_tail,x)
-                 case Some(res) =>  res match {
-                   case Exprbox(expr) => {
-                     true_eval(expr,env_in_stk_unwinder,arguments_in_true_eval)
-                     // The reason why argument_list, just List[val] is transmitted to the Efun,
-                     // not the Environment(List[(String,Val)]),
-                     // is because we don't know the params at this point.
-                     // So, We deliver just argument_list which is received to the EName()
-                     // (This was transferred at EApp() with true_eval(EName(),env,arguments)
-                   }
-                   case Valuebox(value) => value
-                 }
-               }
-             }
-           }
-        }
-        stack_undwinder(env_stack_in_true_eval,x)
       }
 
-      case EHd(el:Expr) => el match {
-        case ECons(eh,et) => true_eval(eh,env_stack_in_true_eval,Nil)
-        case _ => println("EHd fial"); VNil()
-      }
-
-      case EConst(c) => c match {
-        case CInt(n) => VInt(n)
-        case CTrue() => VBool(true)
-        case CFalse() => VBool(false)
-        case CNil() => VNil();
-        case _ => println("EConst fail"); VNil()
-      }
-
-      case other => eval_eval(other,env_stack_in_true_eval,arguments_in_true_eval)
-    }
-  }
-
-
-  def eval_eval(e:Expr, env_stack_in_true_eval: Environment_Stack, arguments_in_true_eval: List[EVbox]) : Val =  {
-
-  e match {
-    case ECons(e1, e2) => {
-      val val_1 = true_eval(e1, env_stack_in_true_eval, Nil)
-      val val_2 = true_eval(e2, env_stack_in_true_eval, Nil)
-      println("ECons in");
-      VPair(val_1, val_2)
-    }
-
-    case EEq(e1, e2) => {
-      true_eval(e1, env_stack_in_true_eval, Nil) match {
-        case ValExpr(expr1) => true_eval(EEq(expr1, e2), env_stack_in_true_eval, Nil)
-        case VInt(n1) => {
-          true_eval(e2, env_stack_in_true_eval, Nil) match {
-            case ValExpr(expr2) => true_eval(EEq(e1, expr2), env_stack_in_true_eval, Nil)
-            case VInt(n2) => {
-              if (n1 == n2) VBool(true) else VBool(false)
+      case ELt(e1, e2) => {
+        true_eval(e1, env_stack_in_true_eval, Nil) match {
+          case ValExpr(expr1) => true_eval(EEq(expr1, e2), env_stack_in_true_eval, Nil)
+          case VInt(n1) => {
+            true_eval(e2, env_stack_in_true_eval, Nil) match {
+              case ValExpr(expr2) => true_eval(EEq(e1, expr2), env_stack_in_true_eval, Nil)
+              case VInt(n2) => {
+                if (n1 > n2) VBool(true) else VBool(false)
+              }
+              case _ => println("VInt failed"); VNil()
             }
-            case _ => println("VInt failed"); VNil()
           }
+          case _ => println("ELT failed"); VNil()
         }
-        case _ => println("EEQ failed"); VNil()
       }
-    }
 
-    case ELt(e1, e2) => {
-      true_eval(e1, env_stack_in_true_eval, Nil) match {
-        case ValExpr(expr1) => true_eval(EEq(expr1, e2), env_stack_in_true_eval, Nil)
-        case VInt(n1) => {
-          true_eval(e2, env_stack_in_true_eval, Nil) match {
-            case ValExpr(expr2) => true_eval(EEq(e1, expr2), env_stack_in_true_eval, Nil)
-            case VInt(n2) => {
-              if (n1 > n2) VBool(true) else VBool(false)
+      case EGt(e1, e2) => {
+        true_eval(e1, env_stack_in_true_eval, Nil) match {
+          case ValExpr(expr1) => true_eval(EEq(expr1, e2), env_stack_in_true_eval, Nil)
+          case VInt(n1) => {
+            true_eval(e2, env_stack_in_true_eval, Nil) match {
+              case ValExpr(expr2) => true_eval(EEq(e1, expr2), env_stack_in_true_eval, Nil)
+              case VInt(n2) => {
+                if (n1 > n2) VBool(true) else VBool(false)
+              }
+              case _ => println("VInt failed"); VNil()
             }
-            case _ => println("VInt failed"); VNil()
           }
+          case _ => println("ELT failed"); VNil()
         }
-        case _ => println("ELT failed"); VNil()
       }
-    }
 
-    case EGt(e1, e2) => {
-      true_eval(e1, env_stack_in_true_eval, Nil) match {
-        case ValExpr(expr1) => true_eval(EEq(expr1, e2), env_stack_in_true_eval, Nil)
-        case VInt(n1) => {
-          true_eval(e2, env_stack_in_true_eval, Nil) match {
-            case ValExpr(expr2) => true_eval(EEq(e1, expr2), env_stack_in_true_eval, Nil)
-            case VInt(n2) => {
-              if (n1 > n2) VBool(true) else VBool(false)
-            }
-            case _ => println("VInt failed"); VNil()
+      case EIf(econd: Expr, et: Expr, ef: Expr) => {
+
+        true_eval(econd, env_stack_in_true_eval, Nil) match {
+          case ValExpr(expr) => true_eval(EIf(expr, et, ef), env_stack_in_true_eval, Nil)
+          case VBool(boolean: Boolean) => boolean match {
+            case true => true_eval(et, env_stack_in_true_eval, Nil)
+            case false => true_eval(ef, env_stack_in_true_eval, Nil)
           }
+          case _ => println("EIf failed"); VNil()
         }
-        case _ => println("ELT failed"); VNil()
       }
-    }
 
-    case EIf(econd: Expr, et: Expr, ef: Expr) => {
-      true_eval(econd, env_stack_in_true_eval, Nil) match {
-        case ValExpr(expr) => true_eval(EIf(expr, et, ef), env_stack_in_true_eval, Nil)
-        case VBool(boolean: Boolean) => boolean match {
-          case true => true_eval(et, env_stack_in_true_eval, Nil)
-          case false => true_eval(ef, env_stack_in_true_eval, Nil)
-        }
-        case _ => println("EIf failed"); VNil()
-      }
-    }
+      case EPlus(e1, e2) => {
+        true_eval(e1, env_stack_in_true_eval, Nil) match {
 
-    case EPlus(e1, e2) => {
-      true_eval(e1, env_stack_in_true_eval, Nil) match {
-
-        case VInt(n1) => true_eval(e2, env_stack_in_true_eval, Nil) match {
-          case ValExpr(expr2) => true_eval(EPlus(e1, expr2), env_stack_in_true_eval, Nil)
-          case VInt(n2) => VInt(n1 + n2)
+          case VInt(n1) => true_eval(e2, env_stack_in_true_eval, Nil) match {
+            case ValExpr(expr2) => true_eval(EPlus(e1, expr2), env_stack_in_true_eval, Nil)
+            case VInt(n2) => VInt(n1 + n2)
+            case _ => println("EPlus failed"); VNil()
+          }
           case _ => println("EPlus failed"); VNil()
         }
-        case _ => println("EPlus failed"); VNil()
       }
-    }
-    case EMinus(e1, e2) => {
-      true_eval(e1, env_stack_in_true_eval, Nil) match {
+      case EMinus(e1, e2) => {
+        true_eval(e1, env_stack_in_true_eval, Nil) match {
 
-        case ValExpr(expr) => true_eval(EPlus(expr, e2), env_stack_in_true_eval, Nil)
-        case VInt(n1) => true_eval(e2, env_stack_in_true_eval, Nil) match {
-          case ValExpr(expr2) => true_eval(EPlus(e1, expr2), env_stack_in_true_eval, Nil)
-          case VInt(n2) => VInt(n1 - n2)
+          case ValExpr(expr) => true_eval(EPlus(expr, e2), env_stack_in_true_eval, Nil)
+          case VInt(n1) => true_eval(e2, env_stack_in_true_eval, Nil) match {
+            case ValExpr(expr2) => true_eval(EPlus(e1, expr2), env_stack_in_true_eval, Nil)
+            case VInt(n2) => VInt(n1 - n2)
+            case _ => println("EPlus failed"); VNil()
+          }
           case _ => println("EPlus failed"); VNil()
         }
-        case _ => println("EPlus failed"); VNil()
       }
-    }
 
-    case EMult(e1, e2) => {
-      true_eval(e1, env_stack_in_true_eval, Nil) match {
-
-        case ValExpr(expr) => true_eval(EPlus(expr, e2), env_stack_in_true_eval, Nil)
-        case VInt(n1) => true_eval(e2, env_stack_in_true_eval, Nil) match {
-          case ValExpr(expr2) => true_eval(EPlus(e1, expr2), env_stack_in_true_eval, Nil)
-          case VInt(n2) => VInt(n1 * n2)
+      case EMult(e1, e2) => {
+        true_eval(e1, env_stack_in_true_eval, Nil) match {
+          case ValExpr(expr) => true_eval(EPlus(expr, e2), env_stack_in_true_eval, Nil)
+          case VInt(n1) => true_eval(e2, env_stack_in_true_eval, Nil) match {
+            case ValExpr(expr2) => true_eval(EPlus(e1, expr2), env_stack_in_true_eval, Nil)
+            case VInt(n2) => VInt(n1 * n2)
+            case _ => println("EPlus failed"); VNil()
+          }
           case _ => println("EPlus failed"); VNil()
         }
-        case _ => println("EPlus failed"); VNil()
       }
-    }
-    case _ => println("Other failed"); VNil()
+      case _ => println("Other failed"); VNil()
     }
   }
 
   //throw new EvalException("Not implemented yet")
-  def myeval_memo(e:Expr) : Val = throw new EvalException("Not implemented yet")
+  def myeval_memo(e:Expr) : Val =  throw new EvalException("Not implemented yet")
 
 }
