@@ -77,7 +77,7 @@ object Main {
   def myeval(e:Expr) : Val = {
       true_eval(e,Nil,Nil)
   }
-
+  
   def true_eval(e:Expr, env_stack_in_true_eval: Environment_Stack, arguments_in_true_eval: List[EVbox]) : Val = {
     println("true_eval in! the expr is",e.toString)
     e match {
@@ -128,8 +128,11 @@ object Main {
         // 새롭게 arg_environment를 만든다고 생각하면 된다. 그리고 기본적인 env Stack 과 독립적으로 줄 것 임
       }
       case EFun(params,eb) => {
-        val params_env : Environment = env_maker_with_params_vals(params,arguments_in_true_eval)
-        true_eval(eb,params_env::env_stack_in_true_eval, Nil)
+        if(params.nonEmpty && (arguments_in_true_eval == Nil)) {VFunc()}
+        else {
+          val params_env: Environment = env_maker_with_params_vals(params, arguments_in_true_eval)
+          true_eval(eb, params_env :: env_stack_in_true_eval, Nil)
+        }
       }
 
       case ELet(bs:List[Bind], eb:Expr) => {
@@ -166,6 +169,7 @@ object Main {
 
         println("EName("+x+"), env_stack: " + env_stack_in_true_eval)
 
+        @tailrec
         def ev_finder(env_in_ev_finder: Environment, x:String) : Option[EVbox] = {
           println("env_in_ev_finder: ",env_in_ev_finder)
           env_in_ev_finder match {
@@ -177,6 +181,7 @@ object Main {
           }
         }
 
+        @tailrec
         def stack_undwinder(env_in_stk_unwinder: Environment_Stack, x:String): Val ={
          println("env_stack_unwider in! and name we are looking for is ", x)
           env_in_stk_unwinder match {
@@ -216,109 +221,117 @@ object Main {
         case _ => println("EConst fail"); VNil()
       }
 
-      case ECons(e1,e2) => {
-        val val_1 = true_eval(e1,env_stack_in_true_eval,Nil)
-        val val_2 = true_eval(e2,env_stack_in_true_eval,Nil)
-        println("ECons in"); VPair(val_1,val_2)
-      }
+      case other => eval_eval(other,env_stack_in_true_eval,arguments_in_true_eval)
+    }
+  }
 
-      case EEq(e1,e2) => {
-        true_eval(e1,env_stack_in_true_eval,Nil) match {
-          case ValExpr(expr1) => true_eval(EEq(expr1,e2),env_stack_in_true_eval,Nil)
-          case VInt(n1) => {
-            true_eval(e2,env_stack_in_true_eval,Nil) match {
-              case ValExpr(expr2) => true_eval(EEq(e1,expr2),env_stack_in_true_eval,Nil)
-              case VInt(n2) => { if(n1 == n2) VBool(true) else VBool(false) }
-              case _ => println("VInt failed"); VNil()
+
+  def eval_eval(e:Expr, env_stack_in_true_eval: Environment_Stack, arguments_in_true_eval: List[EVbox]) : Val =  {
+
+  e match {
+    case ECons(e1, e2) => {
+      val val_1 = true_eval(e1, env_stack_in_true_eval, Nil)
+      val val_2 = true_eval(e2, env_stack_in_true_eval, Nil)
+      println("ECons in");
+      VPair(val_1, val_2)
+    }
+
+    case EEq(e1, e2) => {
+      true_eval(e1, env_stack_in_true_eval, Nil) match {
+        case ValExpr(expr1) => true_eval(EEq(expr1, e2), env_stack_in_true_eval, Nil)
+        case VInt(n1) => {
+          true_eval(e2, env_stack_in_true_eval, Nil) match {
+            case ValExpr(expr2) => true_eval(EEq(e1, expr2), env_stack_in_true_eval, Nil)
+            case VInt(n2) => {
+              if (n1 == n2) VBool(true) else VBool(false)
             }
+            case _ => println("VInt failed"); VNil()
           }
-          case _ => println("EEQ failed"); VNil()
         }
+        case _ => println("EEQ failed"); VNil()
       }
+    }
 
-      case ELt(e1,e2) => {
-        true_eval(e1,env_stack_in_true_eval,Nil) match {
-          case ValExpr(expr1) => true_eval(EEq(expr1,e2),env_stack_in_true_eval,Nil)
-          case VInt(n1) => {
-            true_eval(e2,env_stack_in_true_eval,Nil) match {
-              case ValExpr(expr2) => true_eval(EEq(e1,expr2),env_stack_in_true_eval,Nil)
-              case VInt(n2) => { if(n1 > n2) VBool(true) else VBool(false) }
-              case _ => println("VInt failed"); VNil()
+    case ELt(e1, e2) => {
+      true_eval(e1, env_stack_in_true_eval, Nil) match {
+        case ValExpr(expr1) => true_eval(EEq(expr1, e2), env_stack_in_true_eval, Nil)
+        case VInt(n1) => {
+          true_eval(e2, env_stack_in_true_eval, Nil) match {
+            case ValExpr(expr2) => true_eval(EEq(e1, expr2), env_stack_in_true_eval, Nil)
+            case VInt(n2) => {
+              if (n1 > n2) VBool(true) else VBool(false)
             }
+            case _ => println("VInt failed"); VNil()
           }
-          case _ => println("ELT failed"); VNil()
         }
+        case _ => println("ELT failed"); VNil()
       }
+    }
 
-      case EGt(e1,e2) => {
-        true_eval(e1,env_stack_in_true_eval,Nil) match {
-          case ValExpr(expr1) => true_eval(EEq(expr1,e2),env_stack_in_true_eval,Nil)
-          case VInt(n1) => {
-            true_eval(e2,env_stack_in_true_eval,Nil) match {
-              case ValExpr(expr2) => true_eval(EEq(e1,expr2),env_stack_in_true_eval,Nil)
-              case VInt(n2) => { if(n1 > n2) VBool(true) else VBool(false) }
-              case _ => println("VInt failed"); VNil()
+    case EGt(e1, e2) => {
+      true_eval(e1, env_stack_in_true_eval, Nil) match {
+        case ValExpr(expr1) => true_eval(EEq(expr1, e2), env_stack_in_true_eval, Nil)
+        case VInt(n1) => {
+          true_eval(e2, env_stack_in_true_eval, Nil) match {
+            case ValExpr(expr2) => true_eval(EEq(e1, expr2), env_stack_in_true_eval, Nil)
+            case VInt(n2) => {
+              if (n1 > n2) VBool(true) else VBool(false)
             }
+            case _ => println("VInt failed"); VNil()
           }
-          case _ => println("ELT failed"); VNil()
         }
+        case _ => println("ELT failed"); VNil()
       }
+    }
 
-
-      case EIf(econd:Expr, et:Expr, ef:Expr) => {
-        true_eval(econd,env_stack_in_true_eval,Nil) match {
-          case ValExpr(expr) => true_eval( EIf(expr,et,ef), env_stack_in_true_eval,Nil)
-          case VBool(boolean: Boolean) => boolean match {
-            case true => true_eval(et,env_stack_in_true_eval,Nil)
-            case false => true_eval(ef,env_stack_in_true_eval,Nil)
-          }
-          case _ => println("EIf failed"); VNil()
+    case EIf(econd: Expr, et: Expr, ef: Expr) => {
+      true_eval(econd, env_stack_in_true_eval, Nil) match {
+        case ValExpr(expr) => true_eval(EIf(expr, et, ef), env_stack_in_true_eval, Nil)
+        case VBool(boolean: Boolean) => boolean match {
+          case true => true_eval(et, env_stack_in_true_eval, Nil)
+          case false => true_eval(ef, env_stack_in_true_eval, Nil)
         }
+        case _ => println("EIf failed"); VNil()
       }
+    }
 
-      case EPlus(e1, e2)  => {
-        true_eval(e1,env_stack_in_true_eval,Nil) match {
+    case EPlus(e1, e2) => {
+      true_eval(e1, env_stack_in_true_eval, Nil) match {
 
-          case ValExpr(expr) => true_eval( EPlus(expr,e2),env_stack_in_true_eval,Nil)
-          case VInt(n1) => true_eval(e2,env_stack_in_true_eval,Nil) match {
-            case ValExpr(expr2) => true_eval( EPlus(e1,expr2),env_stack_in_true_eval,Nil)
-            case VInt(n2) => VInt(n1+n2)
-            case _ => println("EPlus failed"); VNil()
-          }
+        case VInt(n1) => true_eval(e2, env_stack_in_true_eval, Nil) match {
+          case ValExpr(expr2) => true_eval(EPlus(e1, expr2), env_stack_in_true_eval, Nil)
+          case VInt(n2) => VInt(n1 + n2)
           case _ => println("EPlus failed"); VNil()
         }
+        case _ => println("EPlus failed"); VNil()
       }
+    }
+    case EMinus(e1, e2) => {
+      true_eval(e1, env_stack_in_true_eval, Nil) match {
 
-      case EMinus(e1, e2)  => {
-        true_eval(e1,env_stack_in_true_eval,Nil) match {
-
-          case ValExpr(expr) => true_eval( EPlus(expr,e2),env_stack_in_true_eval,Nil)
-          case VInt(n1) => true_eval(e2,env_stack_in_true_eval,Nil) match {
-            case ValExpr(expr2) => true_eval( EPlus(e1,expr2),env_stack_in_true_eval,Nil)
-            case VInt(n2) => VInt(n1-n2)
-            case _ => println("EPlus failed"); VNil()
-          }
+        case ValExpr(expr) => true_eval(EPlus(expr, e2), env_stack_in_true_eval, Nil)
+        case VInt(n1) => true_eval(e2, env_stack_in_true_eval, Nil) match {
+          case ValExpr(expr2) => true_eval(EPlus(e1, expr2), env_stack_in_true_eval, Nil)
+          case VInt(n2) => VInt(n1 - n2)
           case _ => println("EPlus failed"); VNil()
         }
+        case _ => println("EPlus failed"); VNil()
       }
+    }
 
-      case EMult(e1, e2)  => {
-        true_eval(e1,env_stack_in_true_eval,Nil) match {
+    case EMult(e1, e2) => {
+      true_eval(e1, env_stack_in_true_eval, Nil) match {
 
-          case ValExpr(expr) => true_eval( EPlus(expr,e2),env_stack_in_true_eval,Nil)
-          case VInt(n1) => true_eval(e2,env_stack_in_true_eval,Nil) match {
-            case ValExpr(expr2) => true_eval( EPlus(e1,expr2),env_stack_in_true_eval,Nil)
-            case VInt(n2) => VInt(n1*n2)
-            case _ => println("EPlus failed"); VNil()
-          }
+        case ValExpr(expr) => true_eval(EPlus(expr, e2), env_stack_in_true_eval, Nil)
+        case VInt(n1) => true_eval(e2, env_stack_in_true_eval, Nil) match {
+          case ValExpr(expr2) => true_eval(EPlus(e1, expr2), env_stack_in_true_eval, Nil)
+          case VInt(n2) => VInt(n1 * n2)
           case _ => println("EPlus failed"); VNil()
         }
+        case _ => println("EPlus failed"); VNil()
       }
-
-
-      case _ =>  println("Other failed"); VNil()
-
-
+    }
+    case _ => println("Other failed"); VNil()
     }
   }
 
