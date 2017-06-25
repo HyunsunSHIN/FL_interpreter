@@ -104,11 +104,13 @@ object Main {
   }
 
 
+
+  val my_hash = collection.mutable.HashMap.empty[Expr,Val]
+
   //tailrec
   def true_eval(e:Expr, env_stack_in_true_eval: Environment_Stack, arguments_in_true_eval: List[EVbox]) : Val = {
     //println("true_eval in! the expr is",e.toString)
     e match {
-
       case EApp(ef:Expr, eargs: List[Expr]) => {
 
         ef match
@@ -286,6 +288,7 @@ object Main {
           case _ => println("EPlus failed"); VNil()
         }
       }
+
       case EMinus(e1, e2) => {
         true_eval(e1, env_stack_in_true_eval, Nil) match {
 
@@ -314,7 +317,11 @@ object Main {
     }
   }
 
-  //throw new EvalException("Not implemented yet")
-  def myeval_memo(e:Expr) : Val =  throw new EvalException("Not implemented yet")
+
+
+  def myeval_memo(e:Expr) : Val =  {
+      myeval(e)
+  }
+
 
 }

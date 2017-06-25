@@ -20,6 +20,7 @@ object Test extends App {
   def run_myeval_memo = run_eval(myeval_memo) _
 
   def run_test(implicit conv:ConvertToScala[Val]) = {
+  /*
     try {
       println("=================")
       println("1. Basic Test")
@@ -130,6 +131,7 @@ object Test extends App {
       case e : EvalException =>
         println("myeval failed: " + e.msg)
     }
+    */
 
     try {
       println("=================")
